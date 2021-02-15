@@ -1,0 +1,14 @@
+{
+  "name": "influx-manager",
+  "version": "0.0.1",
+  "description": "InfluxDB manage scripts",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "eip",
+  "license": "ISC",
+  "dependencies": {
+    "influx": "^5.7.0"
+  }
+}
