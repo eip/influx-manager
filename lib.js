@@ -2,13 +2,15 @@
 
 const config = require('./config');
 
+const log = console;
+
 function patch(influx, disable) {
   if (disable) {
     influx.querySoft = function query(q) {
-      console.info('#', q, '\n');
+      log.info(`\x1b[0;36m${q}\x1b[0m\n`);
     };
     influx.queryRawSoft = function queryRaw(q) {
-      console.info('#', q, '\n');
+      log.info(`\x1b[0;36m${q}\x1b[0m\n`);
     };
     return;
   }
