@@ -15,6 +15,5 @@ module.exports = {
     { name: 'two_months', duration: '61d', resolution: '5m' },
     { name: 'two_years', duration: '731d', resolution: '30m' },
     { name: 'forever', duration: 'INF', resolution: '4h' }
-  ],
-  debug: false
+  ]
 };
