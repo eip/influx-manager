@@ -3,25 +3,9 @@
 'use strict';
 
 const { InfluxDB } = require('influx');
+const config = require('./config');
 
 const log = console;
-const config = {
-  connection: {
-    host: 'cheetah.local',
-    port: 8086,
-    protocol: 'http',
-    database: 'telegraf'
-  },
-  schema: [],
-  oldRetentionPolicyName: 'autogen',
-  retentionPolicies: [
-    { name: 'a_hour', duration: '1h', resolution: '', default: true },
-    { name: 'a_day', duration: '1d', resolution: '1m' },
-    { name: 'a_week', duration: '7d', resolution: '20m' },
-    { name: 'forever', duration: 'INF', resolution: '1h' }
-  ],
-  debug: true
-};
 
 async function run() {
   try {
