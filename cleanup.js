@@ -44,7 +44,7 @@ async function run() {
       }
       if (!lastTime) throw new Error(`cannot get last time of series for "${config.oldRetentionPolicyName}" retention policy`);
       log.info(`transferring data from "${defaultRetentionPolicy.name}".* to "${config.oldRetentionPolicyName}".* retention policy`);
-      await influx.query(`SELECT * INTO ${config.oldRetentionPolicyName}.:MEASUREMENT FROM a_hour./.*/ WHERE time > ${lastTime} GROUP BY *`);
+      await influx.query(`SELECT * INTO ${config.oldRetentionPolicyName}.:MEASUREMENT FROM "${defaultRetentionPolicy.name}"./.*/ WHERE time > ${lastTime} GROUP BY *`);
     } else log.info(`retention policy ${defaultRetentionPolicy.name} not exists`);
 
     for (const rp of rps) {
