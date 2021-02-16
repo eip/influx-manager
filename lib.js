@@ -11,10 +11,10 @@ const log = console;
 function patch(influx, disable) {
   if (disable) {
     influx.querySoft = function query(q) {
-      log.info(`${colors.cyan(q)}\n`);
+      log.info(ts(`${colors.cyan(q)}\n`));
     };
     influx.queryRawSoft = function queryRaw(q) {
-      log.info(`${colors.cyan(q)}\n`);
+      log.info(ts(`${colors.cyan(q)}\n`));
     };
     return;
   }
@@ -41,18 +41,18 @@ function createTransferToDefRPQuery(defaultRetentionPolicy) {
 
 function createDownsampleQuery(retentionPolicy, measurement) {
   if (!retentionPolicy.resolution) return '';
-  const ms = config.schema.find(s => s.measurement === measurement);
-  if (!ms) return '';
+  const meas = config.schema.find(s => s.measurement === measurement);
+  if (!meas) return '';
   const whereClause = retentionPolicy.duration.toUpperCase() === 'INF' ? '' : ` WHERE time >= now() - ${retentionPolicy.duration}`;
-  const fieldsClause = ms.fields.map(f => `mean("${f}") AS "${f}"`).join(', ');
+  const fieldsClause = meas.fields.map(f => `mean("${f}") AS "${f}"`).join(', ');
   return `SELECT ${fieldsClause} INTO "${retentionPolicy.name}"."${measurement}" FROM "${config.oldRetentionPolicyName}"."${measurement}"${whereClause} GROUP BY time(${retentionPolicy.resolution}), *`;
 }
 
 function createCQQuery(retentionPolicy, defaultRetentionPolicy, measurement) {
   if (!retentionPolicy.resolution) return '';
-  const ms = config.schema.find(s => s.measurement === measurement);
-  if (!ms) return '';
-  const fieldsClause = ms.fields.map(f => `mean("${f}") AS "${f}"`).join(', ');
+  const meas = config.schema.find(s => s.measurement === measurement);
+  if (!meas) return '';
+  const fieldsClause = meas.fields.map(f => `mean("${f}") AS "${f}"`).join(', ');
   return `CREATE CONTINUOUS QUERY "cq_${measurement}_${retentionPolicy.resolution}" ON "${config.connection.database}" BEGIN SELECT ${fieldsClause} INTO "${config.connection.database}"."${retentionPolicy.name}"."${measurement}" FROM "${config.connection.database}"."${defaultRetentionPolicy.name}"."${measurement}" GROUP BY time(${retentionPolicy.resolution}), * END`;
 }
 
@@ -88,4 +88,13 @@ function isEqualQueries(q1, q2) {
   return /^[\s"]*$/.test(diffStr);
 }
 
-module.exports = { patch, updateSchema, createRPQuery, createTransferToDefRPQuery, createDownsampleQuery, createCQQuery, dropCQQuery, writeGrafanaRPData, toNanoSec, isEqualQueries };
+function ms(timeout) {
+  return new Promise(resolve => (typeof timeout === 'number' ? setTimeout(resolve, timeout) : setImmediate(resolve)));
+}
+
+function ts(text) {
+  const nowDate = new Date();
+  return [nowDate.toTimeString().split(' ')[0], text].join(' ');
+}
+
+module.exports = { patch, updateSchema, createRPQuery, createTransferToDefRPQuery, createDownsampleQuery, createCQQuery, dropCQQuery, writeGrafanaRPData, toNanoSec, isEqualQueries, ms, ts };
