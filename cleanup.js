@@ -17,7 +17,7 @@ async function run() {
     const cqs = await await influx.query('SHOW CONTINUOUS QUERIES');
     for (const cq of cqs) {
       log.info(`deleting continuous query "${cq.name}"`);
-      await influx.querySoft(`DROP CONTINUOUS QUERY "${cq.name}" ON "${config.connection.database}"`);
+      await influx.queryRawSoft(l.dropCQQuery(cq.name));
     }
 
     const rps = await await influx.query('SHOW RETENTION POLICIES');
@@ -32,17 +32,17 @@ async function run() {
       }
       if (!lastTime) throw new Error(`cannot get last time of series for "${config.oldRetentionPolicyName}" retention policy`);
       log.info(`transferring data from "${defaultRetentionPolicy.name}".* to "${config.oldRetentionPolicyName}".*`);
-      await influx.querySoft(`SELECT * INTO "${config.oldRetentionPolicyName}".:MEASUREMENT FROM "${defaultRetentionPolicy.name}"./.*/ WHERE time > ${lastTime} GROUP BY *`);
+      await influx.queryRawSoft(`SELECT * INTO "${config.oldRetentionPolicyName}".:MEASUREMENT FROM "${defaultRetentionPolicy.name}"./.*/ WHERE time > ${lastTime} GROUP BY *`);
     } else log.info(`retention policy "${defaultRetentionPolicy.name}" not exists`);
 
     for (const rp of rps) {
       // eslint-disable-next-line no-continue
       if (rp.name === config.oldRetentionPolicyName) continue;
       log.info(`deleting retention policy "${rp.name}"`);
-      await influx.querySoft(`DROP RETENTION POLICY "${rp.name}" ON "${config.connection.database}"`);
+      await influx.queryRawSoft(`DROP RETENTION POLICY "${rp.name}" ON "${config.connection.database}"`);
     }
     log.info(`setting retention policy "${config.oldRetentionPolicyName}" as default`);
-    await influx.querySoft(`ALTER RETENTION POLICY "${config.oldRetentionPolicyName}" ON "${config.connection.database}" DEFAULT`);
+    await influx.queryRawSoft(`ALTER RETENTION POLICY "${config.oldRetentionPolicyName}" ON "${config.connection.database}" DEFAULT`);
   } catch (err) {
     log.error(err);
   }

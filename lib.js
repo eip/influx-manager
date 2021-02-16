@@ -10,10 +10,10 @@ const log = console;
 function patch(influx, disable) {
   if (disable) {
     influx.querySoft = function query(q) {
-      log.info(colors.cyan(q) + '\n');
+      log.info(`${colors.cyan(q)}\n`);
     };
     influx.queryRawSoft = function queryRaw(q) {
-      log.info(colors.cyan(q) + '\n');
+      log.info(`${colors.cyan(q)}\n`);
     };
     return;
   }
