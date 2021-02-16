@@ -3,6 +3,7 @@
     "Downsample",
     "Grafana",
     "autogen",
+    "diskio",
     "downsampling"
   ]
 }

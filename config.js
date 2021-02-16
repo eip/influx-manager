@@ -15,5 +15,11 @@ module.exports = {
     { name: 'two_months', duration: '61d', resolution: '5m' },
     { name: 'a_year', duration: '366d', resolution: '30m' },
     { name: 'forever', duration: 'INF', resolution: '4h' }
-  ]
+  ],
+  aggregates: {
+    DEFAULT: 'mean',
+    diskio: 'max',
+    kernel: { DEFAULT: 'max', entropy_avail: 'mean' },
+    net: 'max'
+  }
 };

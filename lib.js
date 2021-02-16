@@ -44,7 +44,7 @@ function createDownsampleQuery(retentionPolicy, measurement) {
   const meas = config.schema.find(s => s.measurement === measurement);
   if (!meas) return '';
   const whereClause = retentionPolicy.duration.toUpperCase() === 'INF' ? '' : ` WHERE time >= now() - ${retentionPolicy.duration}`;
-  const fieldsClause = meas.fields.map(f => `mean("${f}") AS "${f}"`).join(', ');
+  const fieldsClause = meas.fields.map(f => `${agg(measurement, f)}("${f}") AS "${f}"`).join(', ');
   return `SELECT ${fieldsClause} INTO "${retentionPolicy.name}"."${measurement}" FROM "${config.oldRetentionPolicyName}"."${measurement}"${whereClause} GROUP BY time(${retentionPolicy.resolution}), *`;
 }
 
@@ -52,7 +52,7 @@ function createCQQuery(retentionPolicy, defaultRetentionPolicy, measurement) {
   if (!retentionPolicy.resolution) return '';
   const meas = config.schema.find(s => s.measurement === measurement);
   if (!meas) return '';
-  const fieldsClause = meas.fields.map(f => `mean("${f}") AS "${f}"`).join(', ');
+  const fieldsClause = meas.fields.map(f => `${agg(measurement, f)}("${f}") AS "${f}"`).join(', ');
   return `CREATE CONTINUOUS QUERY "cq_${measurement}_${retentionPolicy.resolution}" ON "${config.connection.database}" BEGIN SELECT ${fieldsClause} INTO "${config.connection.database}"."${retentionPolicy.name}"."${measurement}" FROM "${config.connection.database}"."${defaultRetentionPolicy.name}"."${measurement}" GROUP BY time(${retentionPolicy.resolution}), * END`;
 }
 
@@ -72,6 +72,21 @@ async function writeGrafanaRPData(influx, dryRun) {
   }
   log.info(`\x1b[0;36m${points.map(p => `POINT: ${JSON.stringify(p)}`).join('\n')}\x1b[0m\n`);
   return null;
+}
+
+function agg(measure, field) {
+  let result = 'mean';
+  if (isString(config.aggregates.DEFAULT)) result = config.aggregates.DEFAULT;
+  const measureAgg = config.aggregates[measure];
+  if (!measureAgg) return result;
+  if (isString(measureAgg)) return measureAgg;
+  if (isString(measureAgg.DEFAULT)) result = measureAgg.DEFAULT;
+  if (isString(measureAgg[field])) result = measureAgg[field];
+  return result;
+}
+
+function isString(value) {
+  return ![undefined, null].includes(value) && value.constructor === String && value;
 }
 
 function toNanoSec(s) {
@@ -97,4 +112,4 @@ function ts(text) {
   return [nowDate.toTimeString().split(' ')[0], text].join(' ');
 }
 
-module.exports = { patch, updateSchema, createRPQuery, createTransferToDefRPQuery, createDownsampleQuery, createCQQuery, dropCQQuery, writeGrafanaRPData, toNanoSec, isEqualQueries, ms, ts };
+module.exports = { patch, updateSchema, createRPQuery, createTransferToDefRPQuery, createDownsampleQuery, createCQQuery, dropCQQuery, writeGrafanaRPData, toNanoSec, isEqualQueries, ms, ts, agg };
