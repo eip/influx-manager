@@ -32,7 +32,7 @@ async function run() {
         continue;
       }
     }
-    if (messages) {
+    if (messages.length) {
       log.info(messages.join('\n'));
       log.info('need to update retention policies');
       return;
@@ -50,7 +50,7 @@ async function run() {
     const addCQs = wantCQs.filter(wcq => !existCQs.find(ecq => ecq.name === wcq.name));
     for (const ecq of existCQs) {
       const wcq = wantCQs.find(cq => cq.name === ecq.name);
-      if (l.isEqualQueries(ecq.query, wcq.query)) break;
+      if (l.isEqualQueries(ecq.query, wcq.query)) continue;
       deleteCQs.push(ecq);
       addCQs.push(wcq);
     }
