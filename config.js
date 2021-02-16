@@ -13,7 +13,7 @@ module.exports = {
     { name: 'two_days', duration: '2d', resolution: '', default: true },
     { name: 'a_week', duration: '7d', resolution: '1m' },
     { name: 'two_months', duration: '61d', resolution: '5m' },
-    { name: 'two_years', duration: '731d', resolution: '30m' },
+    { name: 'a_year', duration: '366d', resolution: '30m' },
     { name: 'forever', duration: 'INF', resolution: '4h' }
   ]
 };
