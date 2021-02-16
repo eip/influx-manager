@@ -1,4 +1,5 @@
 #! /usr/bin/env node
+/* eslint-disable no-continue */
 
 'use strict';
 
@@ -13,26 +14,31 @@ async function run() {
   try {
     const influx = new InfluxDB(config.connection);
     l.patch(influx, dryRun);
-
-    // const rps = await await influx.query('SHOW RETENTION POLICIES');
-    // if (rps.length > 1) {
-    //   log.info(`retention policies ${rps.map(rp => `"${rp.name}"`).join(', ')} already exist`);
-    //   return;
-    // }
+    const rps = await await influx.query('SHOW RETENTION POLICIES');
+    const messages = [];
+    for (const rp of rps) {
+      const wantRP = config.retentionPolicies.find(wrp => wrp.name === rp.name);
+      if (!wantRP) {
+        if (rp.name === config.oldRetentionPolicyName) continue;
+        messages.push(`redundant retention policy "${rp.name}"`);
+        continue;
+      }
+      if (l.toNanoSec(rp.duration) !== l.toNanoSec(wantRP.duration)) {
+        messages.push(`retention policy "${rp.name}": duration ${rp.duration}, want ${wantRP.duration}`);
+        continue;
+      }
+      if (!rp.default !== !wantRP.default) {
+        messages.push(`retention policy "${rp.name}": default ${rp.default}, want ${wantRP.default}`);
+        continue;
+      }
+    }
+    if (messages) {
+      log.info(messages.join('\n'));
+      log.info('need to update retention policies');
+      return;
+    }
     await l.updateSchema(influx);
     const defaultRetentionPolicy = config.retentionPolicies.find(p => p.default);
-    // for (const rp of config.retentionPolicies) {
-    //   log.info(`creating retention policy "${rp.name}"`);
-    //   await influx.queryRaw(logQuery(createRPQuery(rp)));
-    // }
-    // log.info(`transferring data from "${config.oldRetentionPolicyName}".* to "${defaultRetentionPolicy.name}".* retention policy`);
-    // await influx.queryRaw(logQuery(createTransferToDefRPQuery(defaultRetentionPolicy)));
-    // for (const ms of config.schema) {
-    //   for (const rp of config.retentionPolicies.filter(p => !p.default)) {
-    //     log.info(`downsampling data from "${config.oldRetentionPolicyName}"."${ms.measurement}" to "${rp.name}"."${ms.measurement}" retention policy`);
-    //     await influx.queryRaw(logQuery(createDownsampleQuery(rp, ms.measurement)));
-    //   }
-    // }
     const wantCQs = [];
     for (const ms of config.schema) {
       for (const rp of config.retentionPolicies.filter(p => !p.default)) {
