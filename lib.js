@@ -53,7 +53,7 @@ function createCQQuery(retentionPolicy, defaultRetentionPolicy, measurement) {
   return `CREATE CONTINUOUS QUERY "cq_${measurement}_${retentionPolicy.resolution}" ON "${config.connection.database}" BEGIN SELECT ${fieldsClause} INTO "${config.connection.database}"."${retentionPolicy.name}"."${measurement}" FROM "${config.connection.database}"."${defaultRetentionPolicy.name}"."${measurement}" GROUP BY time(${retentionPolicy.resolution}), * END`;
 }
 
-async function insertGrafanaRPData(influx, dryRun) {
+async function writeGrafanaRPData(influx, dryRun) {
   const targetRP = config.retentionPolicies.find(rp => rp.duration.toUpperCase() === 'INF');
   if (!targetRP) return '';
   const points = [];
@@ -68,10 +68,14 @@ async function insertGrafanaRPData(influx, dryRun) {
 }
 
 function toNanoSec(s) {
-  if (s.toUpperCase() === 'INF') return '9223372036854775806';
+  if (s.toUpperCase() === 'INF') return '9223372036854775806'; // maximum time in nanoseconds
   const unit = s.slice(-1).toLowerCase();
   const val = parseInt(s.slice(0, -1), 10);
   switch (unit) {
+    case 's':
+      return `${val | 0}000000000`;
+    case 'm':
+      return `${(val * 60) | 0}000000000`;
     case 'h':
       return `${(val * 3600) | 0}000000000`;
     case 'd':
@@ -85,4 +89,4 @@ function stripQuotes(s) {
   return s.replace(/"/g, '');
 }
 
-module.exports = { patch, updateSchema, createRPQuery, createTransferToDefRPQuery, createDownsampleQuery, createCQQuery, insertGrafanaRPData, stripQuotes };
+module.exports = { patch, updateSchema, createRPQuery, createTransferToDefRPQuery, createDownsampleQuery, createCQQuery, writeGrafanaRPData, stripQuotes };

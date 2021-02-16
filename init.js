@@ -27,11 +27,11 @@ async function run() {
       await influx.queryRawSoft(l.createRPQuery(rp));
     }
 
-    log.info(`transferring data from "${config.oldRetentionPolicyName}".* to "${defaultRetentionPolicy.name}".* retention policy`);
+    log.info(`transferring data from "${config.oldRetentionPolicyName}".* to "${defaultRetentionPolicy.name}".*`);
     await influx.queryRawSoft(l.createTransferToDefRPQuery(defaultRetentionPolicy));
     for (const ms of config.schema) {
       for (const rp of config.retentionPolicies.filter(p => !p.default)) {
-        log.info(`downsampling data from "${config.oldRetentionPolicyName}"."${ms.measurement}" to "${rp.name}"."${ms.measurement}" retention policy`);
+        log.info(`downsampling data from "${config.oldRetentionPolicyName}"."${ms.measurement}" to "${rp.name}"."${ms.measurement}"`);
         await influx.queryRawSoft(l.createDownsampleQuery(rp, ms.measurement));
       }
     }
@@ -43,8 +43,8 @@ async function run() {
       }
     }
 
-    log.info('inserting retention policies data for grafana');
-    await l.insertGrafanaRPData(influx, dryRun);
+    log.info('writing retention policies data for grafana');
+    await l.writeGrafanaRPData(influx, dryRun);
   } catch (err) {
     log.error(err);
   }
