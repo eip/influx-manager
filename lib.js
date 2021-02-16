@@ -3,6 +3,7 @@
 const Diff = require('diff');
 const { Precision } = require('influx');
 const colors = require('colors/safe');
+const parse = require('parse-duration');
 const config = require('./config');
 
 const log = console;
@@ -74,21 +75,8 @@ async function writeGrafanaRPData(influx, dryRun) {
 }
 
 function toNanoSec(s) {
-  if (s.toUpperCase() === 'INF') return '9223372036854775806'; // maximum time in nanoseconds
-  const unit = s.slice(-1).toLowerCase();
-  const val = parseInt(s.slice(0, -1), 10);
-  switch (unit) {
-    case 's':
-      return `${val | 0}000000000`;
-    case 'm':
-      return `${(val * 60) | 0}000000000`;
-    case 'h':
-      return `${(val * 3600) | 0}000000000`;
-    case 'd':
-      return `${(val * 24 * 3600) | 0}000000000`;
-    default:
-      throw new Error(`unknown unit: ${unit}`);
-  }
+  if (['INF', '0S'].includes(s.toUpperCase())) return '9223372036854775806'; // maximum time in nanoseconds
+  return parse(s, 'ns');
 }
 
 function isEqualQueries(q1, q2) {
@@ -100,4 +88,4 @@ function isEqualQueries(q1, q2) {
   return /^[\s"]*$/.test(diffStr);
 }
 
-module.exports = { patch, updateSchema, createRPQuery, createTransferToDefRPQuery, createDownsampleQuery, createCQQuery, dropCQQuery, writeGrafanaRPData, isEqualQueries };
+module.exports = { patch, updateSchema, createRPQuery, createTransferToDefRPQuery, createDownsampleQuery, createCQQuery, dropCQQuery, writeGrafanaRPData, toNanoSec, isEqualQueries };
