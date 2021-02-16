@@ -1,5 +1,6 @@
 'use strict';
 
+const Diff = require('diff');
 const { Precision } = require('influx');
 const config = require('./config');
 
@@ -53,6 +54,10 @@ function createCQQuery(retentionPolicy, defaultRetentionPolicy, measurement) {
   return `CREATE CONTINUOUS QUERY "cq_${measurement}_${retentionPolicy.resolution}" ON "${config.connection.database}" BEGIN SELECT ${fieldsClause} INTO "${config.connection.database}"."${retentionPolicy.name}"."${measurement}" FROM "${config.connection.database}"."${defaultRetentionPolicy.name}"."${measurement}" GROUP BY time(${retentionPolicy.resolution}), * END`;
 }
 
+function dropCQQuery(name) {
+  return `DROP CONTINUOUS QUERY "${name}" ON "${config.connection.database}"`;
+}
+
 async function writeGrafanaRPData(influx, dryRun) {
   const targetRP = config.retentionPolicies.find(rp => rp.duration.toUpperCase() === 'INF');
   if (!targetRP) return '';
@@ -85,8 +90,13 @@ function toNanoSec(s) {
   }
 }
 
-function stripQuotes(s) {
-  return s.replace(/"/g, '');
+function isEqualQueries(q1, q2) {
+  const diff = Diff.diffChars(q1, q2, { ignoreCase: true });
+  const diffStr = diff
+    .filter(part => part.added || part.removed)
+    .map(part => part.value)
+    .join('');
+  return /^[\s"]*$/.test(diffStr);
 }
 
-module.exports = { patch, updateSchema, createRPQuery, createTransferToDefRPQuery, createDownsampleQuery, createCQQuery, writeGrafanaRPData, stripQuotes };
+module.exports = { patch, updateSchema, createRPQuery, createTransferToDefRPQuery, createDownsampleQuery, createCQQuery, dropCQQuery, writeGrafanaRPData, isEqualQueries };

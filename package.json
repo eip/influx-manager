@@ -9,6 +9,8 @@
   "author": "eip",
   "license": "ISC",
   "dependencies": {
+    "colors": "^1.4.0",
+    "diff": "^5.0.0",
     "influx": "^5.7.0"
   }
 }
